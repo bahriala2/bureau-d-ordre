@@ -3,10 +3,11 @@
 services:
   - type: web
     name: bureau-d-ordre
-    runtime: python
+    # Runtime Docker : le runtime Python natif de Render ne permet pas
+    # d'installer des paquets système (tesseract-ocr, poppler-utils)
+    # nécessaires à l'analyse OCR des documents scannés.
+    runtime: docker
     plan: free
-    buildCommand: ./build.sh
-    startCommand: gunicorn config.wsgi:application
     envVars:
       - key: DJANGO_SECRET_KEY
         generateValue: true
@@ -14,8 +15,6 @@ services:
         value: "False"
       - key: DJANGO_ALLOWED_HOSTS
         value: "*"
-      - key: PYTHON_VERSION
-        value: "3.11.9"
       - key: DATABASE_ENGINE
         value: postgresql
       - key: DATABASE_NAME
