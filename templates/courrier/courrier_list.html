@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Courriers{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Bureau d'ordre — Courriers</h2>
+  <a href="{% url 'courrier:create' %}" class="btn btn-primary">+ Nouveau courrier</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">{{ form.q }}</div>
+  <div class="col-md-3">{{ form.type_courrier }}</div>
+  <div class="col-md-3">{{ form.statut }}</div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100">Rechercher</button></div>
+</form>
+
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+  <thead>
+    <tr>
+      <th>N° d'ordre</th><th>Type</th><th>Objet</th><th>Émetteur</th><th>Récepteur</th>
+      <th>Service</th><th>Statut</th><th>Urgence</th><th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in courriers %}
+    <tr>
+      <td><a href="{% url 'courrier:detail' c.pk %}">{{ c.numero_ordre }}</a></td>
+      <td>{{ c.get_type_courrier_display }}</td>
+      <td>{{ c.objet }}</td>
+      <td>{{ c.emetteur }}</td>
+      <td>{{ c.recepteur }}</td>
+      <td>{{ c.service }}</td>
+      <td><span class="badge bg-secondary">{{ c.get_statut_display }}</span></td>
+      <td>{% if c.urgence == "URGENT" %}<span class="badge bg-danger">Urgent</span>{% else %}Normal{% endif %}</td>
+      <td>{{ c.date_courrier }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="9" class="text-center text-muted">Aucun courrier enregistré</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Demandes d'achat{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Demandes d'achat</h2>
+  <a href="{% url 'achats:create' %}" class="btn btn-primary">+ Nouvelle demande</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+  <div class="col-md-4">
+    <select name="statut" class="form-select">
+      <option value="">Tous les statuts</option>
+      {% for value, label in statuts %}
+      <option value="{{ value }}" {% if value == statut_actif %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100">Filtrer</button></div>
+</form>
+
+<div class="table-responsive">
+<table class="table table-hover align-middle">
+  <thead>
+    <tr><th>Référence</th><th>Objet</th><th>Service</th><th>Type</th><th>Montant</th><th>Statut</th><th>N° BO</th></tr>
+  </thead>
+  <tbody>
+    {% for d in demandes %}
+    <tr>
+      <td><a href="{% url 'achats:detail' d.pk %}">{{ d.reference }}</a></td>
+      <td>{{ d.objet }}</td>
+      <td>{{ d.service_demandeur }}</td>
+      <td>{{ d.get_type_achat_display }}</td>
+      <td>{{ d.montant_estimatif|default:"—" }}</td>
+      <td><span class="badge bg-secondary">{{ d.get_statut_display }}</span></td>
+      <td>{{ d.numero_ordre_bo|default:"—" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7" class="text-center text-muted">Aucune demande</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ courrier.numero_ordre }}{% endblock %}
+{% block content %}
+<h2 class="mb-1">{{ courrier.numero_ordre }} — {{ courrier.objet }}</h2>
+<p class="text-muted">{{ courrier.get_type_courrier_display }} · {{ courrier.date_courrier }}</p>
+
+<div class="row g-3">
+  <div class="col-md-7">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Informations</h5>
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Émetteur</dt><dd class="col-sm-8">{{ courrier.emetteur }}</dd>
+          <dt class="col-sm-4">Récepteur</dt><dd class="col-sm-8">{{ courrier.recepteur }}</dd>
+          <dt class="col-sm-4">Service</dt><dd class="col-sm-8">{{ courrier.service }}</dd>
+          <dt class="col-sm-4">Référence externe</dt><dd class="col-sm-8">{{ courrier.reference_externe|default:"—" }}</dd>
+          <dt class="col-sm-4">Urgence</dt><dd class="col-sm-8">{{ courrier.get_urgence_display }}</dd>
+          <dt class="col-sm-4">Résumé</dt><dd class="col-sm-8">{{ courrier.resume|default:"—" }}</dd>
+          <dt class="col-sm-4">Créé par</dt><dd class="col-sm-8">{{ courrier.created_by }}</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Documents</h5>
+        <ul class="list-group list-group-flush">
+          {% for doc in documents %}
+          <li class="list-group-item"><a href="{{ doc.fichier.url }}" target="_blank">{{ doc.nom }}</a></li>
+          {% empty %}
+          <li class="list-group-item text-muted">Aucun document</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Historique des actions</h5>
+        <ul class="list-group list-group-flush">
+          {% for h in historique %}
+          <li class="list-group-item">
+            <strong>{{ h.action }}</strong> — {{ h.user }} — {{ h.date_action }}
+            {% if h.commentaire %}<div class="small text-muted">{{ h.commentaire }}</div>{% endif %}
+          </li>
+          {% empty %}
+          <li class="list-group-item text-muted">Aucun historique</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Statut : <span class="badge bg-secondary">{{ courrier.get_statut_display }}</span></h5>
+        <form method="post">
+          {% csrf_token %}
+          <label class="form-label">Nouveau statut</label>
+          {{ statut_form.statut }}
+          <label class="form-label mt-2">Commentaire</label>
+          {{ statut_form.commentaire }}
+          <button type="submit" class="btn btn-primary mt-3">Mettre à jour le statut</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
