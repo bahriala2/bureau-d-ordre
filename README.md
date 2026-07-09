@@ -73,6 +73,28 @@ projet. Le circuit d'approbation des demandes d'achat est piloté par les
 actions disponibles sur la page de détail de chaque demande, filtrées selon
 le rôle de l'utilisateur connecté.
 
+## Hébergement / déploiement
+
+**Note : Netlify ne peut pas héberger cette application.** Netlify est réservé
+aux sites statiques et fonctions serverless JavaScript ; une application
+Django avec base de données nécessite un hébergeur Python. L'équivalent
+gratuit le plus proche est **Render**.
+
+### Déploiement sur Render (gratuit, recommandé)
+
+Le dépôt contient un blueprint `render.yaml` (service web + base PostgreSQL) :
+
+1. Créez un compte sur https://render.com (connexion GitHub possible).
+2. Cliquez sur **New → Blueprint** et sélectionnez ce dépôt GitHub.
+3. Render lit `render.yaml`, crée la base PostgreSQL et le service web,
+   exécute `build.sh` (dépendances, collectstatic, migrations, comptes de
+   démonstration) puis démarre `gunicorn`.
+4. L'application est disponible sur `https://bureau-d-ordre.onrender.com`
+   (connexion : `admin` / `Demo1234!` — à changer immédiatement).
+
+Fonctionne aussi sur Railway, Fly.io ou PythonAnywhere : le `Procfile` et
+les variables d'environnement documentées ci-dessus suffisent.
+
 ## Périmètre non couvert dans cette version
 
 Cette première version pose les fondations fonctionnelles (modèles,

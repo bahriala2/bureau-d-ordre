@@ -1,0 +1,44 @@
+# Blueprint Render : déploiement en un clic depuis le dépôt GitHub.
+# https://render.com/docs/blueprints
+services:
+  - type: web
+    name: bureau-d-ordre
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn config.wsgi:application
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: "*"
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: DATABASE_ENGINE
+        value: postgresql
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: bureau-d-ordre-db
+          property: database
+      - key: DATABASE_USER
+        fromDatabase:
+          name: bureau-d-ordre-db
+          property: user
+      - key: DATABASE_PASSWORD
+        fromDatabase:
+          name: bureau-d-ordre-db
+          property: password
+      - key: DATABASE_HOST
+        fromDatabase:
+          name: bureau-d-ordre-db
+          property: host
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: bureau-d-ordre-db
+          property: port
+
+databases:
+  - name: bureau-d-ordre-db
+    plan: free
