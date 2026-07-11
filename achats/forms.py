@@ -17,7 +17,7 @@ class DemandeAchatForm(forms.ModelForm):
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "montant_estimatif": forms.NumberInput(attrs={"class": "form-control", "step": "0.001"}),
             "type_achat": forms.Select(attrs={"class": "form-select"}),
-            "date_creation": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "date_creation": forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d"),
         }
 
 
@@ -34,4 +34,6 @@ class ApprobationForm(forms.ModelForm):
 
 class SignatureDirecteurForm(forms.Form):
     decision_directeur = forms.CharField(widget=forms.Textarea(attrs={"class": "form-control", "rows": 2}), required=False)
-    date_signature_directeur = forms.DateField(widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}))
+    date_signature_directeur = forms.DateField(
+        widget=forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d")
+    )

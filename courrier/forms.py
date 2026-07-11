@@ -13,7 +13,9 @@ class CourrierForm(forms.ModelForm):
             "reference_externe", "service", "urgence", "resume",
         ]
         widgets = {
-            "date_courrier": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            # format ISO obligatoire pour que le champ HTML type=date affiche
+            # la valeur par défaut (la date du jour, définie sur le modèle)
+            "date_courrier": forms.DateInput(attrs={"type": "date", "class": "form-control"}, format="%Y-%m-%d"),
             "type_courrier": forms.Select(attrs={"class": "form-select"}),
             "emetteur": forms.TextInput(attrs={"class": "form-control", "list": "liste-correspondants", "autocomplete": "off"}),
             "recepteur": forms.TextInput(attrs={"class": "form-control", "list": "liste-correspondants", "autocomplete": "off"}),
