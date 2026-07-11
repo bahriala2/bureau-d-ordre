@@ -28,7 +28,9 @@ from marches.models import Marche
 
 LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://openrouter.ai/api/v1")
 LLM_API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("OPENROUTER_API_KEY", "")
-LLM_MODEL = os.environ.get("LLM_MODEL", "openai/gpt-4o-mini")
+# Modèle gratuit par défaut (aucun crédit OpenRouter nécessaire) ;
+# remplaçable par n'importe quel modèle via la variable LLM_MODEL.
+LLM_MODEL = os.environ.get("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
 LLM_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "60"))
 
 SYSTEM_PROMPT = """Tu es l'assistant virtuel du bureau d'ordre de la DTPCSSO

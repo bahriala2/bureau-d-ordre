@@ -20,7 +20,7 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: LLM_MODEL
-        value: "openai/gpt-4o-mini"
+        value: "meta-llama/llama-3.3-70b-instruct:free"
       - key: DATABASE_ENGINE
         value: postgresql
       - key: DATABASE_NAME

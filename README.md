@@ -169,19 +169,22 @@ d'achat et marchés en s'appuyant sur un LLM. Deux options :
    **Windows :**
    ```bat
    set OPENROUTER_API_KEY=sk-or-v1-xxxxxxxx
-   set LLM_MODEL=openai/gpt-4o-mini
    python manage.py runserver
    ```
 
    **Linux / macOS :**
    ```bash
    export OPENROUTER_API_KEY=sk-or-v1-xxxxxxxx
-   export LLM_MODEL=openai/gpt-4o-mini
    python manage.py runserver
    ```
 
-   `LLM_MODEL` accepte n'importe quel modèle OpenRouter
-   (ex. `anthropic/claude-3.5-haiku`, `meta-llama/llama-3.1-70b-instruct`...).
+   Le modèle par défaut est **gratuit**
+   (`meta-llama/llama-3.3-70b-instruct:free`). La variable `LLM_MODEL`
+   accepte n'importe quel modèle OpenRouter si vous souhaitez en changer
+   (ex. `openai/gpt-4o-mini`, `anthropic/claude-3.5-haiku`...).
+   Pour les modèles `:free`, activez « Enable free endpoints » dans
+   https://openrouter.ai/settings/privacy si OpenRouter renvoie une erreur
+   « No endpoints found ».
 
 **Option B — LLM 100 % local avec LM Studio (aucune connexion internet)**
 
