@@ -15,8 +15,8 @@ class CourrierForm(forms.ModelForm):
         widgets = {
             "date_courrier": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "type_courrier": forms.Select(attrs={"class": "form-select"}),
-            "emetteur": forms.TextInput(attrs={"class": "form-control"}),
-            "recepteur": forms.TextInput(attrs={"class": "form-control"}),
+            "emetteur": forms.TextInput(attrs={"class": "form-control", "list": "liste-correspondants", "autocomplete": "off"}),
+            "recepteur": forms.TextInput(attrs={"class": "form-control", "list": "liste-correspondants", "autocomplete": "off"}),
             "objet": forms.TextInput(attrs={"class": "form-control"}),
             "reference_externe": forms.TextInput(attrs={"class": "form-control"}),
             "service": forms.Select(attrs={"class": "form-select"}),

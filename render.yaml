@@ -2,7 +2,7 @@
 # https://render.com/docs/blueprints
 services:
   - type: web
-    name: bureau-d-ordre
+    name: dtpcsso
     # Runtime Docker : le runtime Python natif de Render ne permet pas
     # d'installer des paquets système (tesseract-ocr, poppler-utils)
     # nécessaires à l'analyse OCR des documents scannés.

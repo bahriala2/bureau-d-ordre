@@ -40,6 +40,9 @@
             <div class="col-md-6"><label class="form-label">Date</label>{{ form.date_courrier }}</div>
             <div class="col-md-6"><label class="form-label">Émetteur</label>{{ form.emetteur }}</div>
             <div class="col-md-6"><label class="form-label">Récepteur</label>{{ form.recepteur }}</div>
+            <datalist id="liste-correspondants">
+              {% for c in correspondants %}<option value="{{ c.nom }}">{% endfor %}
+            </datalist>
             <div class="col-12"><label class="form-label">Objet</label>{{ form.objet }}</div>
             <div class="col-md-6"><label class="form-label">Référence externe</label>{{ form.reference_externe }}</div>
             <div class="col-md-6"><label class="form-label">Service concerné</label>{{ form.service }}</div>

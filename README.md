@@ -1,4 +1,4 @@
-# Application de gestion du bureau d'ordre, des demandes d'achat et des marchés
+# DTPCSSO — Gestion du bureau d'ordre, des demandes d'achat et des marchés
 
 Application web (Django) pour la digitalisation du bureau d'ordre, le suivi
 des courriers, des demandes d'achat signées par le directeur, des
@@ -93,7 +93,7 @@ Le dépôt contient un blueprint `render.yaml` (service web + base PostgreSQL) :
 3. Render lit `render.yaml`, crée la base PostgreSQL et le service web,
    exécute `build.sh` (dépendances, collectstatic, migrations, comptes de
    démonstration) puis démarre `gunicorn`.
-4. L'application est disponible sur `https://bureau-d-ordre.onrender.com`
+4. L'application est disponible sur `https://dtpcsso.onrender.com`
    (connexion : `admin` / `Demo1234!` — à changer immédiatement).
 
 Fonctionne aussi sur Railway, Fly.io ou PythonAnywhere : le `Procfile` et

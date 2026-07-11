@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404, redirect, render
 
+from core.models import Correspondant
 from documents.models import Document, TypeDocument
 from documents.services.ocr import analyze_document
 
@@ -111,6 +112,11 @@ def courrier_create(request):
             form.save_m2m()
             courrier.log_action(request.user, "Enregistrement", "Courrier enregistré au bureau d'ordre")
 
+            # Enrichit la liste des correspondants pour l'autocomplétion future
+            for nom in (courrier.emetteur, courrier.recepteur):
+                if nom.strip():
+                    Correspondant.objects.get_or_create(nom=nom.strip())
+
             uploaded = request.FILES.get("fichier")
             if uploaded:
                 Document.objects.create(
@@ -129,7 +135,12 @@ def courrier_create(request):
     return render(
         request,
         "courrier/courrier_form.html",
-        {"form": form, "scan_form": scan_form, "extraction": extraction},
+        {
+            "form": form,
+            "scan_form": scan_form,
+            "extraction": extraction,
+            "correspondants": Correspondant.objects.filter(actif=True),
+        },
     )
 
 

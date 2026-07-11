@@ -18,6 +18,23 @@ class Service(models.Model):
         return self.nom
 
 
+class Correspondant(models.Model):
+    """Émetteur ou récepteur de courrier. Liste gérée dans l'administration et
+    enrichie automatiquement à chaque enregistrement de courrier ; elle
+    alimente l'autocomplétion des champs émetteur / récepteur."""
+
+    nom = models.CharField(max_length=255, unique=True)
+    actif = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["nom"]
+        verbose_name = "Correspondant (émetteur / récepteur)"
+        verbose_name_plural = "Correspondants (émetteurs / récepteurs)"
+
+    def __str__(self):
+        return self.nom
+
+
 class TimeStampedModel(models.Model):
     """Abstract base with creation/update timestamps and author tracking."""
 

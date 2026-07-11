@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 
 from accounts.models import Role, User
 from achats.models import DemandeAchat, StatutDemande, TypeAchat
-from core.models import Service
+from core.models import Correspondant, Service
 from courrier.models import Courrier, StatutCourrier, TypeCourrier
 from marches.models import Marche, StatutMarche, TypeProcedure
 
@@ -46,6 +46,15 @@ class Command(BaseCommand):
                 user.save()
                 self.stdout.write(f"Utilisateur créé : {username} / Demo1234! (rôle : {role})")
             created_users[username] = user
+
+        for nom in [
+            "Direction Générale",
+            "Gouvernorat",
+            "Municipalité",
+            "Ministère de l'Équipement",
+            "Société ABC",
+        ]:
+            Correspondant.objects.get_or_create(nom=nom)
 
         agent_bo = created_users["agent.bo"]
 
