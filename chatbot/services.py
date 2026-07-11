@@ -26,12 +26,16 @@ from achats.models import DemandeAchat
 from courrier.models import STOPWORDS, Courrier, TypeCourrier
 from marches.models import Marche
 
-LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://openrouter.ai/api/v1")
-LLM_API_KEY = os.environ.get("LLM_API_KEY") or os.environ.get("OPENROUTER_API_KEY", "")
-# Modèle gratuit par défaut (aucun crédit OpenRouter nécessaire) ;
-# remplaçable par n'importe quel modèle via la variable LLM_MODEL.
-LLM_MODEL = os.environ.get("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct:free")
-LLM_TIMEOUT = int(os.environ.get("LLM_TIMEOUT", "60"))
+def get_llm_config():
+    """Lit la configuration LLM depuis l'environnement à chaque appel, afin
+    qu'un changement de variable (Render, .env...) soit pris en compte sans
+    modification du code. Modèle par défaut : gratuit sur OpenRouter."""
+    return {
+        "base_url": os.environ.get("LLM_BASE_URL", "https://openrouter.ai/api/v1"),
+        "api_key": os.environ.get("LLM_API_KEY") or os.environ.get("OPENROUTER_API_KEY", ""),
+        "model": os.environ.get("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct:free"),
+        "timeout": int(os.environ.get("LLM_TIMEOUT", "60")),
+    }
 
 SYSTEM_PROMPT = """Tu es l'assistant virtuel du bureau d'ordre de la DTPCSSO
 (application de gestion des courriers, demandes d'achat et marchés d'une
@@ -154,7 +158,8 @@ class LLMError(Exception):
 
 def ask_llm(question, historique=None):
     """Envoie la question au LLM avec le contexte documentaire et retourne la réponse."""
-    if not LLM_API_KEY and "openrouter" in LLM_BASE_URL:
+    config = get_llm_config()
+    if not config["api_key"] and "openrouter" in config["base_url"]:
         raise LLMError(
             "Aucune clé API configurée. Définissez la variable d'environnement "
             "OPENROUTER_API_KEY (ou LLM_API_KEY) puis redémarrez l'application."
@@ -170,16 +175,16 @@ def ask_llm(question, historique=None):
 
     try:
         response = requests.post(
-            f"{LLM_BASE_URL.rstrip('/')}/chat/completions",
+            f"{config['base_url'].rstrip('/')}/chat/completions",
             headers={
-                "Authorization": f"Bearer {LLM_API_KEY or 'lm-studio'}",
+                "Authorization": f"Bearer {config['api_key'] or 'lm-studio'}",
                 "Content-Type": "application/json",
             },
-            json={"model": LLM_MODEL, "messages": messages, "temperature": 0.2},
-            timeout=LLM_TIMEOUT,
+            json={"model": config["model"], "messages": messages, "temperature": 0.2},
+            timeout=config["timeout"],
         )
     except requests.RequestException as exc:
-        raise LLMError(f"Impossible de joindre le service LLM ({LLM_BASE_URL}) : {exc}") from exc
+        raise LLMError(f"Impossible de joindre le service LLM ({config['base_url']}) : {exc}") from exc
 
     if response.status_code != 200:
         raise LLMError(f"Erreur du service LLM (HTTP {response.status_code}) : {response.text[:300]}")

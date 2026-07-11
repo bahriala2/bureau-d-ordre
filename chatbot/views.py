@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from .models import ChatMessage
-from .services import LLM_BASE_URL, LLM_MODEL, LLMError, ask_llm
+from .services import LLMError, ask_llm, get_llm_config
 
 
 @login_required
@@ -25,12 +25,15 @@ def chat(request):
                 messages.error(request, str(exc))
             return redirect("chatbot:chat")
 
+    config = get_llm_config()
     return render(
         request,
         "chatbot/chat.html",
         {
             "historique": historique,
-            "llm_model": LLM_MODEL,
-            "llm_base_url": LLM_BASE_URL,
+            "llm_model": config["model"],
+            "llm_base_url": config["base_url"],
+            "cle_detectee": bool(config["api_key"]),
+            "mode_local": "openrouter" not in config["base_url"],
         },
     )

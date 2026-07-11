@@ -12,8 +12,23 @@
     </div>
     <p class="text-muted small">
       Posez vos questions sur les courriers arrivés et envoyés, leur contenu, les demandes d'achat
-      et les marchés. Modèle : <code>{{ llm_model }}</code>
+      et les marchés. Modèle : <code>{{ llm_model }}</code> ·
+      {% if mode_local %}
+      <span class="badge bg-info">LLM local ({{ llm_base_url }})</span>
+      {% elif cle_detectee %}
+      <span class="badge bg-success">Clé API détectée</span>
+      {% else %}
+      <span class="badge bg-danger">Clé API absente</span>
+      {% endif %}
     </p>
+    {% if not cle_detectee and not mode_local %}
+    <div class="alert alert-warning small">
+      La variable d'environnement <code>OPENROUTER_API_KEY</code> n'est pas visible par l'application.
+      Sur Render : service → <strong>Environment</strong> → « Add Environment Variable » →
+      Key = <code>OPENROUTER_API_KEY</code> (exactement, en majuscules, sans espaces ni guillemets),
+      Value = votre clé → <strong>Save Changes</strong>, puis attendez la fin du redéploiement automatique.
+    </div>
+    {% endif %}
 
     <div class="card mb-3">
       <div class="card-body" id="zone-messages" style="max-height: 55vh; overflow-y: auto;">
