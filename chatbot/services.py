@@ -26,14 +26,28 @@ from achats.models import DemandeAchat
 from courrier.models import STOPWORDS, Courrier, TypeCourrier
 from marches.models import Marche
 
+def _nettoyer_cle(valeur):
+    """Neutralise les erreurs de saisie courantes dans la variable
+    d'environnement : espaces, guillemets, préfixe « Bearer » superflu."""
+    valeur = (valeur or "").strip().strip('"').strip("'").strip()
+    if valeur.lower().startswith("bearer "):
+        valeur = valeur[7:].strip()
+    return valeur
+
+
 def get_llm_config():
     """Lit la configuration LLM depuis l'environnement à chaque appel, afin
     qu'un changement de variable (Render, .env...) soit pris en compte sans
     modification du code. Modèle par défaut : gratuit sur OpenRouter."""
+    base_url = os.environ.get("LLM_BASE_URL", "https://openrouter.ai/api/v1").strip().strip('"').strip("'")
+    # Une URL en http:// vers OpenRouter provoque une redirection qui supprime
+    # l'en-tête Authorization ("Missing Authentication header") : forcer https.
+    if "openrouter.ai" in base_url:
+        base_url = base_url.replace("http://", "https://")
     return {
-        "base_url": os.environ.get("LLM_BASE_URL", "https://openrouter.ai/api/v1"),
-        "api_key": os.environ.get("LLM_API_KEY") or os.environ.get("OPENROUTER_API_KEY", ""),
-        "model": os.environ.get("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct:free"),
+        "base_url": base_url,
+        "api_key": _nettoyer_cle(os.environ.get("LLM_API_KEY") or os.environ.get("OPENROUTER_API_KEY", "")),
+        "model": os.environ.get("LLM_MODEL", "meta-llama/llama-3.3-70b-instruct:free").strip().strip('"').strip("'"),
         "timeout": int(os.environ.get("LLM_TIMEOUT", "60")),
     }
 

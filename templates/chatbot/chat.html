@@ -17,6 +17,7 @@
       <span class="badge bg-info">LLM local ({{ llm_base_url }})</span>
       {% elif cle_detectee %}
       <span class="badge bg-success">Clé API détectée</span>
+      <span class="text-muted">{{ cle_masquee }} · {{ llm_base_url }}</span>
       {% else %}
       <span class="badge bg-danger">Clé API absente</span>
       {% endif %}

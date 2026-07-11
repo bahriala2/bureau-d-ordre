@@ -26,6 +26,7 @@ def chat(request):
             return redirect("chatbot:chat")
 
     config = get_llm_config()
+    cle = config["api_key"]
     return render(
         request,
         "chatbot/chat.html",
@@ -33,7 +34,8 @@ def chat(request):
             "historique": historique,
             "llm_model": config["model"],
             "llm_base_url": config["base_url"],
-            "cle_detectee": bool(config["api_key"]),
+            "cle_detectee": bool(cle),
+            "cle_masquee": f"{cle[:12]}…{cle[-4:]} ({len(cle)} caractères)" if cle else "",
             "mode_local": "openrouter" not in config["base_url"],
         },
     )
