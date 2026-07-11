@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "achats",
     "marches",
     "dashboard",
+    "chatbot",
 ]
 
 AUTH_USER_MODEL = "accounts.User"

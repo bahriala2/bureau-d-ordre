@@ -22,6 +22,10 @@ territoriale.
   bureau d'ordre et transmission au service achat.
 - **Marchés** : suivi des consultations, attributions, notifications et
   clôtures.
+- **Assistant intelligent (chatbot)** : répond en français aux questions sur
+  les courriers arrivés/envoyés et leur contenu, les demandes d'achat et les
+  marchés, comme un agent du bureau d'ordre qui connaît tous les dossiers
+  (via OpenRouter, ou un LLM local avec LM Studio).
 - **Tableau de bord** : indicateurs clés et alertes de retard.
 - **Rôles** : administrateur, agent bureau d'ordre, chef de service,
   directeur, service achat, service financier, audit.
@@ -152,6 +156,49 @@ brew install tesseract tesseract-lang poppler
 Redémarrez ensuite `python manage.py runserver` : le bouton « Analyser le
 document » remplira automatiquement la fiche du courrier.
 
+### 7. (Optionnel) Activer l'assistant intelligent (chatbot)
+
+L'onglet **🤖 Assistant** répond aux questions sur les courriers, demandes
+d'achat et marchés en s'appuyant sur un LLM. Deux options :
+
+**Option A — OpenRouter (recommandée pour commencer)**
+
+1. Créez une clé API sur https://openrouter.ai/keys
+2. Définissez les variables d'environnement avant de lancer le serveur :
+
+   **Windows :**
+   ```bat
+   set OPENROUTER_API_KEY=sk-or-v1-xxxxxxxx
+   set LLM_MODEL=openai/gpt-4o-mini
+   python manage.py runserver
+   ```
+
+   **Linux / macOS :**
+   ```bash
+   export OPENROUTER_API_KEY=sk-or-v1-xxxxxxxx
+   export LLM_MODEL=openai/gpt-4o-mini
+   python manage.py runserver
+   ```
+
+   `LLM_MODEL` accepte n'importe quel modèle OpenRouter
+   (ex. `anthropic/claude-3.5-haiku`, `meta-llama/llama-3.1-70b-instruct`...).
+
+**Option B — LLM 100 % local avec LM Studio (aucune connexion internet)**
+
+1. Installez LM Studio : https://lmstudio.ai
+2. Téléchargez-y un modèle (ex. Llama 3.1 8B Instruct) et démarrez le
+   serveur local (onglet « Developer » → Start Server, port 1234 par défaut)
+3. Lancez l'application avec :
+
+   ```bash
+   export LLM_BASE_URL=http://localhost:1234/v1
+   export LLM_MODEL=nom-du-modele-charge-dans-lmstudio
+   python manage.py runserver
+   ```
+
+Sans configuration, l'onglet Assistant reste accessible mais affiche un
+message expliquant comment configurer la clé.
+
 ### Utilisation quotidienne (après la première installation)
 
 ```bash
@@ -190,6 +237,9 @@ Facultatif en local — les valeurs par défaut conviennent.
 | `DJANGO_ALLOWED_HOSTS` | Hôtes autorisés (séparés par des virgules) | `*` |
 | `DATABASE_ENGINE` | `postgresql` pour utiliser PostgreSQL | SQLite |
 | `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_HOST`, `DATABASE_PORT` | Connexion PostgreSQL | — |
+| `OPENROUTER_API_KEY` (ou `LLM_API_KEY`) | Clé API pour l'assistant | — |
+| `LLM_BASE_URL` | URL de l'API LLM (OpenRouter ou LM Studio) | `https://openrouter.ai/api/v1` |
+| `LLM_MODEL` | Modèle utilisé par l'assistant | `openai/gpt-4o-mini` |
 
 ## Hébergement en ligne (optionnel)
 

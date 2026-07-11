@@ -15,6 +15,12 @@ services:
         value: "False"
       - key: DJANGO_ALLOWED_HOSTS
         value: "*"
+      # Assistant / chatbot : renseigner la clé dans le tableau de bord Render
+      # (Environment) — sync: false évite de la stocker dans le dépôt.
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: "openai/gpt-4o-mini"
       - key: DATABASE_ENGINE
         value: postgresql
       - key: DATABASE_NAME
