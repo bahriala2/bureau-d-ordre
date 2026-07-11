@@ -2,7 +2,14 @@
 {% block title %}{{ demande.reference }}{% endblock %}
 {% block content %}
 <h2 class="mb-1">{{ demande.reference }} — {{ demande.objet }}</h2>
-<p class="text-muted">{{ demande.get_type_achat_display }} · {{ demande.service_demandeur }}</p>
+<p class="text-muted">
+  {{ demande.get_type_achat_display }} · {{ demande.service_demandeur }} ·
+  {% if demande.circuit == "LOCALE" %}
+  <span class="badge bg-success">Circuit local — signature du directeur uniquement</span>
+  {% else %}
+  <span class="badge bg-primary">Circuit avec accords (DCP et autres directions)</span>
+  {% endif %}
+</p>
 
 <div class="row g-3">
   <div class="col-md-7">

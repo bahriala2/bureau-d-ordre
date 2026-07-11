@@ -1,10 +1,20 @@
+import re
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from core.models import Service
 from documents.models import Document
+
+# Mots vides ignorés lors de la recherche de correspondances similaires
+STOPWORDS = {
+    "avec", "pour", "dans", "cette", "votre", "notre", "leur", "vous", "nous",
+    "demande", "objet", "concernant", "suite", "relative", "relatif", "lettre",
+    "courrier", "monsieur", "madame", "sans", "sous", "entre", "ainsi",
+}
 
 
 class TypeCourrier(models.TextChoices):
@@ -42,6 +52,9 @@ class Courrier(models.Model):
 
     documents = GenericRelation(Document, related_query_name="courrier")
 
+    # Correspondances explicitement liées entre elles (ex : réponse à un courrier reçu)
+    courriers_lies = models.ManyToManyField("self", blank=True, symmetrical=True)
+
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="courriers_crees"
     )
@@ -71,6 +84,31 @@ class Courrier(models.Model):
 
     def log_action(self, user, action, commentaire=""):
         return HistoriqueAction.objects.create(courrier=self, user=user, action=action, commentaire=commentaire)
+
+    def correspondances_similaires(self, limit=10):
+        """Courriers (entrants ou sortants, toutes périodes) partageant la même
+        référence, le même thème (mots significatifs de l'objet) ou le même
+        interlocuteur — suggérés automatiquement dans la page de détail."""
+        mots = [
+            m.lower() for m in re.split(r"\W+", self.objet)
+            if len(m) >= 4 and m.lower() not in STOPWORDS
+        ]
+        q = Q()
+        if self.reference_externe:
+            q |= Q(reference_externe__iexact=self.reference_externe)
+        for mot in mots[:8]:
+            q |= Q(objet__icontains=mot)
+        if self.emetteur:
+            q |= Q(emetteur__iexact=self.emetteur) | Q(recepteur__iexact=self.emetteur)
+        if self.recepteur:
+            q |= Q(emetteur__iexact=self.recepteur) | Q(recepteur__iexact=self.recepteur)
+        return (
+            Courrier.objects.filter(q)
+            .exclude(pk=self.pk)
+            .exclude(pk__in=self.courriers_lies.values_list("pk", flat=True))
+            .distinct()
+            .order_by("-date_courrier")[:limit]
+        )
 
 
 class HistoriqueAction(models.Model):

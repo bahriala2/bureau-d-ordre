@@ -8,41 +8,69 @@ from django.shortcuts import get_object_or_404, redirect, render
 from documents.models import Document, TypeDocument
 from documents.services.ocr import analyze_document
 
-from .forms import CourrierForm, CourrierSearchForm, ScanUploadForm, StatutChangeForm
-from .models import Courrier
+from .forms import CourrierForm, ScanUploadForm, StatutChangeForm
+from .models import Courrier, StatutCourrier, TypeCourrier
+
+# Filtres par colonne : paramètre GET -> filtre ORM
+COLUMN_FILTERS = {
+    "numero": "numero_ordre__icontains",
+    "objet": "objet__icontains",
+    "emetteur": "emetteur__icontains",
+    "recepteur": "recepteur__icontains",
+    "reference": "reference_externe__icontains",
+    "service": "service__nom__icontains",
+    "statut": "statut",
+    "date": "date_courrier",
+}
+
+
+def _liste_courriers(request, type_courrier):
+    courriers = Courrier.objects.select_related("service").filter(type_courrier=type_courrier)
+
+    filtres = {}
+    for param, lookup in COLUMN_FILTERS.items():
+        valeur = request.GET.get(param, "").strip()
+        if valeur:
+            courriers = courriers.filter(**{lookup: valeur})
+            filtres[param] = valeur
+
+    est_entrant = type_courrier == TypeCourrier.ENTRANT
+    return render(
+        request,
+        "courrier/courrier_list.html",
+        {
+            "courriers": courriers,
+            "filtres": filtres,
+            "type_courrier": type_courrier,
+            "est_entrant": est_entrant,
+            "titre": "Courriers entrants" if est_entrant else "Courriers sortants",
+            "statuts": StatutCourrier.choices,
+        },
+    )
+
+
+@login_required
+def courrier_entrants(request):
+    return _liste_courriers(request, TypeCourrier.ENTRANT)
+
+
+@login_required
+def courrier_sortants(request):
+    return _liste_courriers(request, TypeCourrier.SORTANT)
 
 
 @login_required
 def courrier_list(request):
-    form = CourrierSearchForm(request.GET or None)
-    courriers = Courrier.objects.select_related("service").all()
-
-    if form.is_valid():
-        q = form.cleaned_data.get("q")
-        if q:
-            from django.db.models import Q
-
-            courriers = courriers.filter(
-                Q(numero_ordre__icontains=q)
-                | Q(objet__icontains=q)
-                | Q(emetteur__icontains=q)
-                | Q(recepteur__icontains=q)
-                | Q(reference_externe__icontains=q)
-            )
-        if form.cleaned_data.get("type_courrier"):
-            courriers = courriers.filter(type_courrier=form.cleaned_data["type_courrier"])
-        if form.cleaned_data.get("statut"):
-            courriers = courriers.filter(statut=form.cleaned_data["statut"])
-        if form.cleaned_data.get("service"):
-            courriers = courriers.filter(service=form.cleaned_data["service"])
-
-    return render(request, "courrier/courrier_list.html", {"courriers": courriers, "form": form})
+    return redirect("courrier:entrants")
 
 
 @login_required
 def courrier_create(request):
     extraction = None
     initial = {}
+    type_defaut = request.GET.get("type")
+    if type_defaut in (TypeCourrier.ENTRANT, TypeCourrier.SORTANT):
+        initial["type_courrier"] = type_defaut
     scan_form = ScanUploadForm(request.POST or None, request.FILES or None)
 
     if request.method == "POST" and "analyser" in request.POST:
@@ -53,14 +81,16 @@ def courrier_create(request):
                     tmp.write(chunk)
                 tmp_path = tmp.name
             extraction = analyze_document(tmp_path)
-            initial = {
-                "objet": extraction.objet,
-                "emetteur": extraction.emetteur,
-                "recepteur": extraction.recepteur,
-                "reference_externe": extraction.reference,
-                "resume": extraction.resume,
-                "urgence": "URGENT" if extraction.urgence == "Urgent" else "NORMAL",
-            }
+            initial.update(
+                {
+                    "objet": extraction.objet,
+                    "emetteur": extraction.emetteur,
+                    "recepteur": extraction.recepteur,
+                    "reference_externe": extraction.reference,
+                    "resume": extraction.resume,
+                    "urgence": "URGENT" if extraction.urgence == "Urgent" else "NORMAL",
+                }
+            )
             if not extraction.ocr_disponible:
                 messages.warning(
                     request,
@@ -78,6 +108,7 @@ def courrier_create(request):
             courrier.created_by = request.user
             courrier.statut = "ENREGISTRE"
             courrier.save()
+            form.save_m2m()
             courrier.log_action(request.user, "Enregistrement", "Courrier enregistré au bureau d'ordre")
 
             uploaded = request.FILES.get("fichier")
@@ -93,7 +124,7 @@ def courrier_create(request):
             messages.success(request, f"Courrier {courrier.numero_ordre} enregistré avec succès.")
             return redirect("courrier:detail", pk=courrier.pk)
     else:
-        form = CourrierForm()
+        form = CourrierForm(initial=initial)
 
     return render(
         request,
@@ -108,6 +139,23 @@ def courrier_detail(request, pk):
     statut_form = StatutChangeForm(initial={"statut": courrier.statut})
 
     if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "lier":
+            cible = Courrier.objects.filter(pk=request.POST.get("courrier_cible")).first()
+            if cible and cible.pk != courrier.pk:
+                courrier.courriers_lies.add(cible)
+                courrier.log_action(request.user, f"Liaison avec la correspondance {cible.numero_ordre}")
+                messages.success(request, f"Correspondance {cible.numero_ordre} liée.")
+            return redirect("courrier:detail", pk=courrier.pk)
+
+        if action == "delier":
+            cible = Courrier.objects.filter(pk=request.POST.get("courrier_cible")).first()
+            if cible:
+                courrier.courriers_lies.remove(cible)
+                messages.success(request, f"Liaison avec {cible.numero_ordre} supprimée.")
+            return redirect("courrier:detail", pk=courrier.pk)
+
         statut_form = StatutChangeForm(request.POST)
         if statut_form.is_valid():
             ancien_statut = courrier.get_statut_display()
@@ -129,5 +177,7 @@ def courrier_detail(request, pk):
             "statut_form": statut_form,
             "historique": courrier.historique.select_related("user"),
             "documents": courrier.documents.all(),
+            "courriers_lies": courrier.courriers_lies.all(),
+            "similaires": courrier.correspondances_similaires(),
         },
     )

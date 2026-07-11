@@ -16,10 +16,17 @@ class TypeAchat(models.TextChoices):
     AUTRE = "AUTRE", "Autre"
 
 
+class CircuitDemande(models.TextChoices):
+    AVEC_ACCORDS = "AVEC_ACCORDS", "Avec accords (DCP et autres directions)"
+    LOCALE = "LOCALE", "Locale — signature du directeur uniquement"
+
+
 class StatutDemande(models.TextChoices):
     BROUILLON = "BROUILLON", "Brouillon"
     SOUMISE = "SOUMISE", "Soumise"
     VALIDEE_CHEF_SERVICE = "VALIDEE_CHEF_SERVICE", "Validée par chef de service"
+    EN_ATTENTE_ACCORDS = "EN_ATTENTE_ACCORDS", "En attente des accords (DCP / directions)"
+    ACCORDS_OBTENUS = "ACCORDS_OBTENUS", "Accords obtenus"
     SOUMISE_DIRECTEUR = "SOUMISE_DIRECTEUR", "Soumise au directeur"
     SIGNEE_DIRECTEUR = "SIGNEE_DIRECTEUR", "Signée par directeur"
     RECUE_BUREAU_ORDRE = "RECUE_BUREAU_ORDRE", "Reçue par le bureau d'ordre"
@@ -32,8 +39,28 @@ class StatutDemande(models.TextChoices):
     REJETEE = "REJETEE", "Rejetée"
 
 
-# Ordered workflow used to drive the "next status" suggestion in the UI.
-WORKFLOW_ORDER = [
+# Ordered workflows per circuit, used to drive the "next status" suggestion
+# in the UI. Le circuit AVEC_ACCORDS passe par les accords de la DCP et des
+# autres directions avant la signature du directeur ; le circuit LOCALE va
+# directement du chef de service au directeur.
+WORKFLOW_AVEC_ACCORDS = [
+    StatutDemande.BROUILLON,
+    StatutDemande.SOUMISE,
+    StatutDemande.VALIDEE_CHEF_SERVICE,
+    StatutDemande.EN_ATTENTE_ACCORDS,
+    StatutDemande.ACCORDS_OBTENUS,
+    StatutDemande.SOUMISE_DIRECTEUR,
+    StatutDemande.SIGNEE_DIRECTEUR,
+    StatutDemande.RECUE_BUREAU_ORDRE,
+    StatutDemande.ENREGISTREE,
+    StatutDemande.TRANSMISE_SERVICE_ACHAT,
+    StatutDemande.EN_COURS_TRAITEMENT,
+    StatutDemande.BON_COMMANDE_PREPARE,
+    StatutDemande.MARCHE_LANCE,
+    StatutDemande.CLOTUREE,
+]
+
+WORKFLOW_LOCALE = [
     StatutDemande.BROUILLON,
     StatutDemande.SOUMISE,
     StatutDemande.VALIDEE_CHEF_SERVICE,
@@ -64,6 +91,12 @@ SIGNEE_OU_APRES = {
 
 class DemandeAchat(models.Model):
     reference = models.CharField(max_length=30, unique=True, editable=False)
+    circuit = models.CharField(
+        max_length=15,
+        choices=CircuitDemande.choices,
+        default=CircuitDemande.LOCALE,
+        help_text="Circuit de validation : avec accords (DCP et autres directions) ou local (signature du directeur uniquement)",
+    )
     service_demandeur = models.ForeignKey(Service, on_delete=models.PROTECT, related_name="demandes_achat")
     objet = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -109,6 +142,12 @@ class DemandeAchat(models.Model):
     @property
     def est_signee_par_directeur(self):
         return self.statut in SIGNEE_OU_APRES
+
+    @property
+    def workflow(self):
+        if self.circuit == CircuitDemande.AVEC_ACCORDS:
+            return WORKFLOW_AVEC_ACCORDS
+        return WORKFLOW_LOCALE
 
     def enregistrer_au_bureau_ordre(self):
         """Attribue un numéro d'ordre au bureau d'ordre pour une demande signée (section 7)."""

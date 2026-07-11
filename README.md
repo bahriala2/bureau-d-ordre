@@ -6,14 +6,18 @@ approbations et des marchés publics d'une administration territoriale.
 
 ## Modules
 
-- **Bureau d'ordre** (`courrier`) : courriers entrants/sortants, numéro
-  d'ordre automatique, statuts, historique des actions, recherche
-  multicritère, scan intelligent (OCR + extraction heuristique) avec
+- **Bureau d'ordre** (`courrier`) : listes séparées des courriers entrants et
+  sortants avec recherche par colonne et lignes cliquables, numéro d'ordre
+  automatique, statuts, historique des actions, correspondances liées
+  (liaison manuelle + suggestions automatiques par thème, référence ou
+  interlocuteur), scan intelligent (OCR + extraction heuristique) avec
   pré-remplissage vérifié par l'agent.
-- **Demandes d'achat** (`achats`) : cycle complet service demandeur → chef de
-  service → directeur → bureau d'ordre → service achat, avec approbations,
-  suivi des demandes signées par le directeur (`/achats/signees-bureau-ordre/`)
-  et attribution d'un numéro d'ordre au bureau d'ordre.
+- **Demandes d'achat** (`achats`) : deux circuits de validation — « avec
+  accords » (la demande passe par la DCP et les autres directions avant la
+  signature du directeur) et « locale » (signature du directeur uniquement) —
+  avec approbations, suivi des demandes signées par le directeur
+  (`/achats/signees-bureau-ordre/`) et attribution d'un numéro d'ordre au
+  bureau d'ordre.
 - **Marchés** (`marches`) : suivi des consultations, attributions,
   notifications et clôtures, avec lien optionnel vers la demande d'achat
   d'origine.

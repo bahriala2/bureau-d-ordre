@@ -11,10 +11,10 @@ class ApprobationInline(admin.TabularInline):
 @admin.register(DemandeAchat)
 class DemandeAchatAdmin(admin.ModelAdmin):
     list_display = (
-        "reference", "objet", "service_demandeur", "type_achat",
+        "reference", "objet", "circuit", "service_demandeur", "type_achat",
         "montant_estimatif", "statut", "date_signature_directeur", "numero_ordre_bo",
     )
-    list_filter = ("statut", "type_achat", "service_demandeur")
+    list_filter = ("circuit", "statut", "type_achat", "service_demandeur")
     search_fields = ("reference", "objet", "numero_ordre_bo")
     readonly_fields = ("reference", "created_by", "created_at", "updated_at")
     inlines = [ApprobationInline]

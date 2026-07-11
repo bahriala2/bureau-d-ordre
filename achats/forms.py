@@ -7,10 +7,11 @@ class DemandeAchatForm(forms.ModelForm):
     class Meta:
         model = DemandeAchat
         fields = [
-            "service_demandeur", "objet", "description", "montant_estimatif",
+            "circuit", "service_demandeur", "objet", "description", "montant_estimatif",
             "type_achat", "date_creation",
         ]
         widgets = {
+            "circuit": forms.Select(attrs={"class": "form-select"}),
             "service_demandeur": forms.Select(attrs={"class": "form-select"}),
             "objet": forms.TextInput(attrs={"class": "form-control"}),
             "description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),

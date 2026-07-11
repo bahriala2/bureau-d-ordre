@@ -6,12 +6,14 @@ from django.utils import timezone
 from accounts.models import Role
 
 from .forms import ApprobationForm, DemandeAchatForm
-from .models import Approbation, DemandeAchat, StatutDemande
+from .models import Approbation, CircuitDemande, DemandeAchat, StatutDemande
 
 # action -> (target status, roles allowed, message)
 ACTIONS = {
     "soumettre": (StatutDemande.SOUMISE, {Role.AGENT_BUREAU_ORDRE, Role.CHEF_SERVICE, Role.ADMINISTRATEUR}, "Demande soumise."),
     "valider_chef_service": (StatutDemande.VALIDEE_CHEF_SERVICE, {Role.CHEF_SERVICE, Role.ADMINISTRATEUR}, "Demande validée par le chef de service."),
+    "demander_accords": (StatutDemande.EN_ATTENTE_ACCORDS, {Role.CHEF_SERVICE, Role.AGENT_BUREAU_ORDRE, Role.ADMINISTRATEUR}, "Demande transmise pour accords (DCP et directions concernées)."),
+    "confirmer_accords": (StatutDemande.ACCORDS_OBTENUS, {Role.CHEF_SERVICE, Role.AGENT_BUREAU_ORDRE, Role.ADMINISTRATEUR}, "Accords obtenus."),
     "soumettre_directeur": (StatutDemande.SOUMISE_DIRECTEUR, {Role.CHEF_SERVICE, Role.ADMINISTRATEUR}, "Demande soumise au directeur."),
     "signer_directeur": (StatutDemande.SIGNEE_DIRECTEUR, {Role.DIRECTEUR, Role.ADMINISTRATEUR}, "Demande signée par le directeur."),
     "recevoir_bureau_ordre": (StatutDemande.RECUE_BUREAU_ORDRE, {Role.AGENT_BUREAU_ORDRE, Role.ADMINISTRATEUR}, "Demande reçue par le bureau d'ordre."),
@@ -23,11 +25,12 @@ ACTIONS = {
     "rejeter": (StatutDemande.REJETEE, {Role.CHEF_SERVICE, Role.DIRECTEUR, Role.ADMINISTRATEUR}, "Demande rejetée."),
 }
 
-# statut courant -> liste des actions possibles pour l'écran de détail
-NEXT_ACTIONS = {
+# statut courant -> actions possibles, selon le circuit de la demande.
+# Circuit AVEC_ACCORDS : le chef de service demande d'abord les accords de la
+# DCP et des autres directions ; circuit LOCALE : passage direct au directeur.
+NEXT_ACTIONS_COMMUN = {
     StatutDemande.BROUILLON: ["soumettre"],
     StatutDemande.SOUMISE: ["valider_chef_service", "rejeter"],
-    StatutDemande.VALIDEE_CHEF_SERVICE: ["soumettre_directeur", "rejeter"],
     StatutDemande.SOUMISE_DIRECTEUR: ["signer_directeur", "rejeter"],
     StatutDemande.SIGNEE_DIRECTEUR: ["recevoir_bureau_ordre"],
     StatutDemande.RECUE_BUREAU_ORDRE: ["enregistrer_bureau_ordre"],
@@ -38,9 +41,24 @@ NEXT_ACTIONS = {
     StatutDemande.MARCHE_LANCE: ["cloturer"],
 }
 
+NEXT_ACTIONS_PAR_CIRCUIT = {
+    CircuitDemande.AVEC_ACCORDS: {
+        **NEXT_ACTIONS_COMMUN,
+        StatutDemande.VALIDEE_CHEF_SERVICE: ["demander_accords", "rejeter"],
+        StatutDemande.EN_ATTENTE_ACCORDS: ["confirmer_accords", "rejeter"],
+        StatutDemande.ACCORDS_OBTENUS: ["soumettre_directeur", "rejeter"],
+    },
+    CircuitDemande.LOCALE: {
+        **NEXT_ACTIONS_COMMUN,
+        StatutDemande.VALIDEE_CHEF_SERVICE: ["soumettre_directeur", "rejeter"],
+    },
+}
+
 ACTION_LABELS = {
     "soumettre": "Soumettre",
     "valider_chef_service": "Valider (chef de service)",
+    "demander_accords": "Demander les accords (DCP / directions)",
+    "confirmer_accords": "Confirmer les accords obtenus",
     "soumettre_directeur": "Soumettre au directeur",
     "signer_directeur": "Signer (directeur)",
     "recevoir_bureau_ordre": "Marquer reçue au bureau d'ordre",
@@ -58,9 +76,22 @@ ACTION_LABELS = {
 def demande_list(request):
     demandes = DemandeAchat.objects.select_related("service_demandeur").all()
     statut = request.GET.get("statut")
+    circuit = request.GET.get("circuit")
     if statut:
         demandes = demandes.filter(statut=statut)
-    return render(request, "achats/demande_list.html", {"demandes": demandes, "statuts": StatutDemande.choices, "statut_actif": statut})
+    if circuit:
+        demandes = demandes.filter(circuit=circuit)
+    return render(
+        request,
+        "achats/demande_list.html",
+        {
+            "demandes": demandes,
+            "statuts": StatutDemande.choices,
+            "statut_actif": statut,
+            "circuits": CircuitDemande.choices,
+            "circuit_actif": circuit,
+        },
+    )
 
 
 @login_required
@@ -124,8 +155,9 @@ def demande_detail(request, pk):
                 messages.success(request, msg)
             return redirect("achats:detail", pk=demande.pk)
 
+    actions_du_circuit = NEXT_ACTIONS_PAR_CIRCUIT.get(demande.circuit, NEXT_ACTIONS_PAR_CIRCUIT[CircuitDemande.LOCALE])
     next_actions = [
-        (code, ACTION_LABELS[code]) for code in NEXT_ACTIONS.get(demande.statut, [])
+        (code, ACTION_LABELS[code]) for code in actions_du_circuit.get(demande.statut, [])
     ]
 
     return render(

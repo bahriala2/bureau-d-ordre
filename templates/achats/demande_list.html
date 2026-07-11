@@ -15,19 +15,34 @@
       {% endfor %}
     </select>
   </div>
+  <div class="col-md-4">
+    <select name="circuit" class="form-select">
+      <option value="">Tous les circuits</option>
+      {% for value, label in circuits %}
+      <option value="{{ value }}" {% if value == circuit_actif %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
   <div class="col-md-2"><button class="btn btn-outline-secondary w-100">Filtrer</button></div>
 </form>
 
 <div class="table-responsive">
 <table class="table table-hover align-middle">
   <thead>
-    <tr><th>Référence</th><th>Objet</th><th>Service</th><th>Type</th><th>Montant</th><th>Statut</th><th>N° BO</th></tr>
+    <tr><th>Référence</th><th>Objet</th><th>Circuit</th><th>Service</th><th>Type</th><th>Montant</th><th>Statut</th><th>N° BO</th></tr>
   </thead>
   <tbody>
     {% for d in demandes %}
-    <tr>
-      <td><a href="{% url 'achats:detail' d.pk %}">{{ d.reference }}</a></td>
+    <tr class="ligne-demande" data-href="{% url 'achats:detail' d.pk %}" style="cursor:pointer">
+      <td>{{ d.reference }}</td>
       <td>{{ d.objet }}</td>
+      <td>
+        {% if d.circuit == "LOCALE" %}
+        <span class="badge bg-success">Locale</span>
+        {% else %}
+        <span class="badge bg-primary">Avec accords</span>
+        {% endif %}
+      </td>
       <td>{{ d.service_demandeur }}</td>
       <td>{{ d.get_type_achat_display }}</td>
       <td>{{ d.montant_estimatif|default:"—" }}</td>
@@ -35,9 +50,15 @@
       <td>{{ d.numero_ordre_bo|default:"—" }}</td>
     </tr>
     {% empty %}
-    <tr><td colspan="7" class="text-center text-muted">Aucune demande</td></tr>
+    <tr><td colspan="8" class="text-center text-muted">Aucune demande</td></tr>
     {% endfor %}
   </tbody>
 </table>
 </div>
+
+<script>
+document.querySelectorAll(".ligne-demande").forEach(function (tr) {
+  tr.addEventListener("click", function () { window.location = tr.dataset.href; });
+});
+</script>
 {% endblock %}
