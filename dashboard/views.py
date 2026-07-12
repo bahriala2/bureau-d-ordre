@@ -20,6 +20,51 @@ EN_COURS_STATUTS_MARCHE = {
 }
 
 
+SECTIONS_IMPRESSION = {
+    "entrants": "Courriers arrivée",
+    "sortants": "Courriers départ",
+    "da_locales": "Demandes d'achat locales",
+    "da_accords": "Demandes d'achat avec accords (DCP / directions)",
+    "marches": "Marchés",
+}
+
+
+@login_required
+def impression(request):
+    """Impression groupée : l'utilisateur coche les listes à imprimer."""
+    choisies = [s for s in request.GET.getlist("sections") if s in SECTIONS_IMPRESSION]
+
+    donnees = {}
+    if "entrants" in choisies:
+        donnees["entrants"] = Courrier.objects.select_related("service").filter(
+            type_courrier=TypeCourrier.ENTRANT
+        ).order_by("-date_courrier")
+    if "sortants" in choisies:
+        donnees["sortants"] = Courrier.objects.select_related("service").filter(
+            type_courrier=TypeCourrier.SORTANT
+        ).order_by("-date_courrier")
+    if "da_locales" in choisies:
+        donnees["da_locales"] = DemandeAchat.objects.select_related("service_demandeur").filter(
+            circuit="LOCALE"
+        )
+    if "da_accords" in choisies:
+        donnees["da_accords"] = DemandeAchat.objects.select_related("service_demandeur").filter(
+            circuit="AVEC_ACCORDS"
+        )
+    if "marches" in choisies:
+        donnees["marches"] = Marche.objects.select_related("service_demandeur").all()
+
+    return render(
+        request,
+        "dashboard/impression.html",
+        {
+            "sections": SECTIONS_IMPRESSION,
+            "choisies": choisies,
+            "donnees": donnees,
+        },
+    )
+
+
 @login_required
 def dashboard_home(request):
     today = timezone.localdate()

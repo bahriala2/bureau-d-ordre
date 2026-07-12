@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from .models import ChatMessage
-from .services import LLMError, ask_llm, get_llm_config
+from .services import LLMError, ask_llm, get_llm_config, tester_connexion
 
 
 @login_required
@@ -13,6 +13,14 @@ def chat(request):
     if request.method == "POST":
         if "effacer" in request.POST:
             ChatMessage.objects.filter(utilisateur=request.user).delete()
+            return redirect("chatbot:chat")
+
+        if "tester" in request.POST:
+            resultat = tester_connexion()
+            if resultat.startswith("✅"):
+                messages.success(request, resultat)
+            else:
+                messages.error(request, resultat)
             return redirect("chatbot:chat")
 
         question = request.POST.get("question", "").strip()

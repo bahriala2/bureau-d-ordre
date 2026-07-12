@@ -10,8 +10,9 @@ class CourrierForm(forms.ModelForm):
         model = Courrier
         fields = [
             "type_courrier", "date_courrier", "emetteur", "recepteur", "objet",
-            "reference_externe", "service", "urgence", "resume",
+            "reference_externe", "urgence", "resume", "remarque",
         ]
+        labels = {"reference_externe": "Référence"}
         widgets = {
             # format ISO obligatoire pour que le champ HTML type=date affiche
             # la valeur par défaut (la date du jour, définie sur le modèle)
@@ -21,9 +22,9 @@ class CourrierForm(forms.ModelForm):
             "recepteur": forms.TextInput(attrs={"class": "form-control", "list": "liste-correspondants", "autocomplete": "off"}),
             "objet": forms.TextInput(attrs={"class": "form-control"}),
             "reference_externe": forms.TextInput(attrs={"class": "form-control"}),
-            "service": forms.Select(attrs={"class": "form-select"}),
             "urgence": forms.Select(attrs={"class": "form-select"}),
             "resume": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "remarque": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
 
 

@@ -26,3 +26,27 @@ form input[type="email"] {
     border: 1px solid #ced4da;
     border-radius: .375rem;
 }
+
+/* Impression : ne garder que les tableaux et titres */
+@media print {
+    .navbar,
+    .zone-boutons button,
+    .zone-boutons a,
+    .no-print,
+    tr.filtres,
+    noscript,
+    .alert {
+        display: none !important;
+    }
+    body {
+        background: #fff;
+    }
+    .table-responsive {
+        overflow: visible;
+        box-shadow: none;
+    }
+    a {
+        text-decoration: none;
+        color: #000;
+    }
+}

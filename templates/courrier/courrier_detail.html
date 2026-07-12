@@ -12,10 +12,11 @@
         <dl class="row mb-0">
           <dt class="col-sm-4">Émetteur</dt><dd class="col-sm-8">{{ courrier.emetteur }}</dd>
           <dt class="col-sm-4">Récepteur</dt><dd class="col-sm-8">{{ courrier.recepteur }}</dd>
-          <dt class="col-sm-4">Service</dt><dd class="col-sm-8">{{ courrier.service }}</dd>
-          <dt class="col-sm-4">Référence externe</dt><dd class="col-sm-8">{{ courrier.reference_externe|default:"—" }}</dd>
+          <dt class="col-sm-4">Service</dt><dd class="col-sm-8">{{ courrier.service|default:"—" }}</dd>
+          <dt class="col-sm-4">Référence</dt><dd class="col-sm-8">{{ courrier.reference_externe|default:"—" }}</dd>
           <dt class="col-sm-4">Urgence</dt><dd class="col-sm-8">{{ courrier.get_urgence_display }}</dd>
           <dt class="col-sm-4">Résumé</dt><dd class="col-sm-8">{{ courrier.resume|default:"—" }}</dd>
+          <dt class="col-sm-4">Remarque</dt><dd class="col-sm-8">{{ courrier.remarque|default:"—"|linebreaksbr }}</dd>
           <dt class="col-sm-4">Créé par</dt><dd class="col-sm-8">{{ courrier.created_by }}</dd>
         </dl>
       </div>

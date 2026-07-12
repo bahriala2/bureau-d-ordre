@@ -6,13 +6,38 @@ from .forms import MarcheForm
 from .models import Marche, StatutMarche
 
 
+# Filtres par colonne de la liste des marchés : paramètre GET -> filtre ORM
+MARCHE_COLUMN_FILTERS = {
+    "reference": "reference__icontains",
+    "objet": "objet__icontains",
+    "procedure": "type_procedure",
+    "fournisseur": "fournisseur__icontains",
+    "statut": "statut",
+}
+
+
 @login_required
 def marche_list(request):
+    from .models import TypeProcedure
+
     marches = Marche.objects.select_related("service_demandeur").all()
-    statut = request.GET.get("statut")
-    if statut:
-        marches = marches.filter(statut=statut)
-    return render(request, "marches/marche_list.html", {"marches": marches, "statuts": StatutMarche.choices, "statut_actif": statut})
+    filtres = {}
+    for param, lookup in MARCHE_COLUMN_FILTERS.items():
+        valeur = request.GET.get(param, "").strip()
+        if valeur:
+            marches = marches.filter(**{lookup: valeur})
+            filtres[param] = valeur
+
+    return render(
+        request,
+        "marches/marche_list.html",
+        {
+            "marches": marches,
+            "filtres": filtres,
+            "statuts": StatutMarche.choices,
+            "procedures": TypeProcedure.choices,
+        },
+    )
 
 
 @login_required

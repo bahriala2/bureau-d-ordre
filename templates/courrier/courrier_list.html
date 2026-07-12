@@ -1,11 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ titre }}{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3 zone-boutons">
   <h2>{{ titre }}</h2>
-  <a href="{% url 'courrier:create' %}?type={{ type_courrier }}" class="btn btn-primary">
-    + Nouveau courrier {% if est_entrant %}entrant{% else %}sortant{% endif %}
-  </a>
+  <div>
+    <button onclick="window.print()" class="btn btn-outline-secondary">🖨 Imprimer</button>
+    <a href="{% url 'courrier:create' %}?type={{ type_courrier }}" class="btn btn-primary">
+      + Nouveau courrier {% if est_entrant %}entrant{% else %}sortant{% endif %}
+    </a>
+  </div>
 </div>
 
 <form method="get" id="filtres-form">
@@ -43,7 +46,7 @@
       <td>{{ c.emetteur }}</td>
       <td>{{ c.recepteur }}</td>
       <td>{{ c.reference_externe|default:"—" }}</td>
-      <td>{{ c.service }}</td>
+      <td>{{ c.service|default:"—" }}</td>
       <td><span class="badge bg-secondary">{{ c.get_statut_display }}</span></td>
       <td>{% if c.urgence == "URGENT" %}<span class="badge bg-danger">Urgent</span>{% else %}Normal{% endif %}</td>
       <td>{{ c.date_courrier|date:"d/m/Y" }}</td>

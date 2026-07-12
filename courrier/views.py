@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import get_object_or_404, redirect, render
 
-from core.models import Correspondant
+from core.models import Correspondant, Service
 from documents.models import Document, TypeDocument
 from documents.services.ocr import analyze_document
 
@@ -108,6 +108,9 @@ def courrier_create(request):
             courrier = form.save(commit=False)
             courrier.created_by = request.user
             courrier.statut = "ENREGISTRE"
+            # Le service n'est plus saisi dans le formulaire : il est affecté
+            # automatiquement (service de l'agent connecté, sinon le premier actif)
+            courrier.service = request.user.service or Service.objects.filter(actif=True).first()
             courrier.save()
             form.save_m2m()
             courrier.log_action(request.user, "Enregistrement", "Courrier enregistré au bureau d'ordre")

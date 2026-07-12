@@ -170,6 +170,33 @@ class LLMError(Exception):
     pass
 
 
+def tester_connexion():
+    """Vérifie la clé auprès du fournisseur et retourne un diagnostic lisible.
+    Pour OpenRouter, GET /key renvoie les informations de la clé si elle est
+    valide ; pour un LLM local, GET /models vérifie que le serveur répond."""
+    config = get_llm_config()
+    if not config["api_key"] and "openrouter" in config["base_url"]:
+        return "Aucune clé détectée dans l'environnement (OPENROUTER_API_KEY / LLM_API_KEY)."
+
+    if "openrouter" in config["base_url"]:
+        url = "https://openrouter.ai/api/v1/key"
+    else:
+        url = f"{config['base_url'].rstrip('/')}/models"
+
+    try:
+        r = requests.get(
+            url,
+            headers={"Authorization": f"Bearer {config['api_key'] or 'lm-studio'}"},
+            timeout=20,
+        )
+    except requests.RequestException as exc:
+        return f"Connexion impossible vers {url} : {exc}"
+
+    if r.status_code == 200:
+        return f"✅ Connexion réussie (HTTP 200). Clé valide sur {config['base_url']} — modèle configuré : {config['model']}."
+    return f"❌ HTTP {r.status_code} sur {url} : {r.text[:300]}"
+
+
 def ask_llm(question, historique=None):
     """Envoie la question au LLM avec le contexte documentaire et retourne la réponse."""
     config = get_llm_config()

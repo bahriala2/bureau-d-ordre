@@ -72,24 +72,39 @@ ACTION_LABELS = {
 }
 
 
+# Filtres par colonne de la liste des demandes : paramètre GET -> filtre ORM
+DEMANDE_COLUMN_FILTERS = {
+    "reference": "reference__icontains",
+    "objet": "objet__icontains",
+    "circuit": "circuit",
+    "service": "service_demandeur__nom__icontains",
+    "type_achat": "type_achat",
+    "statut": "statut",
+    "numero_bo": "numero_ordre_bo__icontains",
+}
+
+
 @login_required
 def demande_list(request):
+    from .models import TypeAchat
+
     demandes = DemandeAchat.objects.select_related("service_demandeur").all()
-    statut = request.GET.get("statut")
-    circuit = request.GET.get("circuit")
-    if statut:
-        demandes = demandes.filter(statut=statut)
-    if circuit:
-        demandes = demandes.filter(circuit=circuit)
+    filtres = {}
+    for param, lookup in DEMANDE_COLUMN_FILTERS.items():
+        valeur = request.GET.get(param, "").strip()
+        if valeur:
+            demandes = demandes.filter(**{lookup: valeur})
+            filtres[param] = valeur
+
     return render(
         request,
         "achats/demande_list.html",
         {
             "demandes": demandes,
+            "filtres": filtres,
             "statuts": StatutDemande.choices,
-            "statut_actif": statut,
             "circuits": CircuitDemande.choices,
-            "circuit_actif": circuit,
+            "types_achat": TypeAchat.choices,
         },
     )
 
@@ -134,6 +149,24 @@ def demande_detail(request, pk):
                 messages.success(request, "Approbation enregistrée.")
                 return redirect("achats:detail", pk=demande.pk)
 
+        elif action == "changer_statut":
+            # Changement manuel : le workflow guidé reste proposé, mais le
+            # statut est librement ajustable selon les besoins et le secteur
+            # d'activité de l'administration (tous rôles sauf consultation/audit).
+            if request.user.role == Role.AUDIT:
+                messages.error(request, "Le rôle consultation/audit ne peut pas modifier les statuts.")
+            else:
+                nouveau = request.POST.get("nouveau_statut")
+                if nouveau in StatutDemande.values:
+                    demande.statut = nouveau
+                    if nouveau == StatutDemande.SIGNEE_DIRECTEUR and not demande.date_signature_directeur:
+                        demande.date_signature_directeur = timezone.localdate()
+                    demande.save()
+                    messages.success(request, f"Statut changé : {demande.get_statut_display()}.")
+                else:
+                    messages.error(request, "Statut invalide.")
+            return redirect("achats:detail", pk=demande.pk)
+
         elif action == "enregistrer_bureau_ordre":
             if request.user.role in {Role.AGENT_BUREAU_ORDRE, Role.ADMINISTRATEUR}:
                 demande.enregistrer_au_bureau_ordre()
@@ -169,5 +202,6 @@ def demande_detail(request, pk):
             "approbations": demande.approbations.select_related("valideur"),
             "documents": demande.documents.all(),
             "next_actions": next_actions,
+            "tous_statuts": StatutDemande.choices,
         },
     )

@@ -44,8 +44,11 @@ class Courrier(models.Model):
     emetteur = models.CharField(max_length=255)
     recepteur = models.CharField(max_length=255)
     objet = models.CharField(max_length=255)
-    reference_externe = models.CharField(max_length=100, blank=True)
-    service = models.ForeignKey(Service, on_delete=models.PROTECT, related_name="courriers")
+    reference_externe = models.CharField("Référence", max_length=100, blank=True)
+    service = models.ForeignKey(
+        Service, on_delete=models.PROTECT, related_name="courriers", null=True, blank=True
+    )
+    remarque = models.TextField(blank=True, help_text="Remarque libre (toute information utile)")
     statut = models.CharField(max_length=20, choices=StatutCourrier.choices, default=StatutCourrier.RECU)
     urgence = models.CharField(max_length=10, choices=Urgence.choices, default=Urgence.NORMAL)
     resume = models.TextField(blank=True)
