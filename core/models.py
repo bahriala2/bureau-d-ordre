@@ -1,5 +1,13 @@
 from django.db import models
 
+# Mots vides ignorés lors de la recherche de correspondances/dossiers similaires
+STOPWORDS = {
+    "avec", "pour", "dans", "cette", "votre", "notre", "leur", "vous", "nous",
+    "demande", "objet", "concernant", "suite", "relative", "relatif", "lettre",
+    "courrier", "monsieur", "madame", "sans", "sous", "entre", "ainsi",
+    "achat", "marche", "marché",
+}
+
 
 class Service(models.Model):
     """Service / direction administrative (ex: Service Achat, Direction Générale...)."""

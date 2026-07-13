@@ -1,10 +1,13 @@
+import re
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from achats.models import DemandeAchat
-from core.models import Service
+from core.models import STOPWORDS, Service
 from documents.models import Document
 
 
@@ -48,6 +51,9 @@ class Marche(models.Model):
 
     documents = GenericRelation(Document, related_query_name="marche")
 
+    # Marchés explicitement liés entre eux (ex : reconduction, lot complémentaire)
+    marches_lies = models.ManyToManyField("self", blank=True, symmetrical=True)
+
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="marches_crees"
     )
@@ -71,3 +77,25 @@ class Marche(models.Model):
         year = timezone.localdate().year
         count = Marche.objects.filter(created_at__year=year).count()
         return f"MAR-{year}-{count + 1:05d}"
+
+    def marches_similaires(self, limit=10):
+        """Marchés partageant le même thème (mots significatifs de l'objet) ou
+        le même fournisseur — suggérés dans la page de détail."""
+        mots = [
+            m.lower() for m in re.split(r"\W+", self.objet)
+            if len(m) >= 4 and m.lower() not in STOPWORDS
+        ]
+        q = Q()
+        for mot in mots[:10]:
+            q |= Q(objet__icontains=mot)
+        if self.fournisseur:
+            q |= Q(fournisseur__iexact=self.fournisseur)
+        if not q:
+            return Marche.objects.none()
+        return (
+            Marche.objects.filter(q)
+            .exclude(pk=self.pk)
+            .exclude(pk__in=self.marches_lies.values_list("pk", flat=True))
+            .distinct()
+            .order_by("-created_at")[:limit]
+        )

@@ -58,4 +58,28 @@ def marche_create(request):
 @login_required
 def marche_detail(request, pk):
     marche = get_object_or_404(Marche.objects.select_related("service_demandeur", "demande_achat"), pk=pk)
-    return render(request, "marches/marche_detail.html", {"marche": marche, "documents": marche.documents.all()})
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "lier":
+            cible = Marche.objects.filter(pk=request.POST.get("marche_cible")).first()
+            if cible and cible.pk != marche.pk:
+                marche.marches_lies.add(cible)
+                messages.success(request, f"Marché {cible.reference} lié.")
+        elif action == "delier":
+            cible = Marche.objects.filter(pk=request.POST.get("marche_cible")).first()
+            if cible:
+                marche.marches_lies.remove(cible)
+                messages.success(request, f"Liaison avec {cible.reference} supprimée.")
+        return redirect("marches:detail", pk=marche.pk)
+
+    return render(
+        request,
+        "marches/marche_detail.html",
+        {
+            "marche": marche,
+            "documents": marche.documents.all(),
+            "marches_lies": marche.marches_lies.all(),
+            "similaires": marche.marches_similaires(),
+        },
+    )

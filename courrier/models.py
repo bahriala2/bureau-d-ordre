@@ -6,15 +6,8 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
-from core.models import Service
+from core.models import STOPWORDS, Service
 from documents.models import Document
-
-# Mots vides ignorés lors de la recherche de correspondances similaires
-STOPWORDS = {
-    "avec", "pour", "dans", "cette", "votre", "notre", "leur", "vous", "nous",
-    "demande", "objet", "concernant", "suite", "relative", "relatif", "lettre",
-    "courrier", "monsieur", "madame", "sans", "sous", "entre", "ainsi",
-}
 
 
 class TypeCourrier(models.TextChoices):

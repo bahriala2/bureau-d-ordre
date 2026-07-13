@@ -1,9 +1,12 @@
+import re
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
-from core.models import Service
+from core.models import STOPWORDS, Service
 from documents.models import Document
 
 
@@ -115,6 +118,9 @@ class DemandeAchat(models.Model):
 
     documents = GenericRelation(Document, related_query_name="demande_achat")
 
+    # Demandes explicitement liées entre elles (ex : renouvellement, complément)
+    demandes_liees = models.ManyToManyField("self", blank=True, symmetrical=True)
+
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name="demandes_creees"
     )
@@ -148,6 +154,26 @@ class DemandeAchat(models.Model):
         if self.circuit == CircuitDemande.AVEC_ACCORDS:
             return WORKFLOW_AVEC_ACCORDS
         return WORKFLOW_LOCALE
+
+    def demandes_similaires(self, limit=10):
+        """Demandes partageant le même thème (mots significatifs de l'objet ou
+        de la description) ou le même service — suggérées dans le détail."""
+        mots = [
+            m.lower() for m in re.split(r"\W+", f"{self.objet} {self.description}")
+            if len(m) >= 4 and m.lower() not in STOPWORDS
+        ]
+        q = Q()
+        for mot in mots[:10]:
+            q |= Q(objet__icontains=mot) | Q(description__icontains=mot)
+        if not q:
+            return DemandeAchat.objects.none()
+        return (
+            DemandeAchat.objects.filter(q)
+            .exclude(pk=self.pk)
+            .exclude(pk__in=self.demandes_liees.values_list("pk", flat=True))
+            .distinct()
+            .order_by("-created_at")[:limit]
+        )
 
     def enregistrer_au_bureau_ordre(self):
         """Attribue un numéro d'ordre au bureau d'ordre pour une demande signée (section 7)."""

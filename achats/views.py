@@ -149,6 +149,20 @@ def demande_detail(request, pk):
                 messages.success(request, "Approbation enregistrée.")
                 return redirect("achats:detail", pk=demande.pk)
 
+        elif action == "lier":
+            cible = DemandeAchat.objects.filter(pk=request.POST.get("demande_cible")).first()
+            if cible and cible.pk != demande.pk:
+                demande.demandes_liees.add(cible)
+                messages.success(request, f"Demande {cible.reference} liée.")
+            return redirect("achats:detail", pk=demande.pk)
+
+        elif action == "delier":
+            cible = DemandeAchat.objects.filter(pk=request.POST.get("demande_cible")).first()
+            if cible:
+                demande.demandes_liees.remove(cible)
+                messages.success(request, f"Liaison avec {cible.reference} supprimée.")
+            return redirect("achats:detail", pk=demande.pk)
+
         elif action == "changer_statut":
             # Changement manuel : le workflow guidé reste proposé, mais le
             # statut est librement ajustable selon les besoins et le secteur
@@ -203,5 +217,7 @@ def demande_detail(request, pk):
             "documents": demande.documents.all(),
             "next_actions": next_actions,
             "tous_statuts": StatutDemande.choices,
+            "demandes_liees": demande.demandes_liees.all(),
+            "similaires": demande.demandes_similaires(),
         },
     )
